@@ -1,0 +1,15 @@
+@import url("https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&display=swap");
+
+html,
+body,
+#root {
+  min-height: 100%;
+}
+
+body {
+  margin: 0;
+  background:
+    radial-gradient(circle at 8% -10%, rgba(139, 28, 46, 0.16), transparent 35%),
+    radial-gradient(circle at 95% 18%, rgba(107, 15, 26, 0.14), transparent 40%),
+    #f4f4f4;
+}
