@@ -4,9 +4,9 @@ services:
     container_name: pasarela-postgres
     restart: unless-stopped
     environment:
-      POSTGRES_DB: ${POSTGRES_DB:?POSTGRES_DB is required}
-      POSTGRES_USER: ${POSTGRES_USER:?POSTGRES_USER is required}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}
+      POSTGRES_DB: ${POSTGRES_DB:-pasarela_pago}
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
     volumes:
       - pg_data:/var/lib/postgresql/data
     ports:
@@ -14,7 +14,7 @@ services:
     healthcheck:
       test:
         - CMD-SHELL
-        - pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}
+        - pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-pasarela_pago}
       interval: 10s
       timeout: 5s
       retries: 5
@@ -33,18 +33,18 @@ services:
     environment:
       NODE_ENV: production
       PORT: 4000
-      FRONTEND_URL: ${FRONTEND_URL:?FRONTEND_URL is required}
-      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
-      STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY:?STRIPE_SECRET_KEY is required}
+      FRONTEND_URL: ${FRONTEND_URL:-http://frontend:5173}
+      DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@postgres:5432/${POSTGRES_DB:-pasarela_pago}
+      STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY:-sk_test_xxx}
       STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET:-}
-      STRIPE_PUBLISHABLE_KEY: ${STRIPE_PUBLISHABLE_KEY:?STRIPE_PUBLISHABLE_KEY is required}
-      RESEND_API_KEY: ${RESEND_API_KEY:?RESEND_API_KEY is required}
-      UNIVERSITY_FROM_EMAIL: ${UNIVERSITY_FROM_EMAIL:?UNIVERSITY_FROM_EMAIL is required}
-      BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET:?BETTER_AUTH_SECRET is required}
-      BETTER_AUTH_URL: ${BETTER_AUTH_URL:?BETTER_AUTH_URL is required}
-      ADMIN_EMAILS: ${ADMIN_EMAILS:?ADMIN_EMAILS is required}
-      DEFAULT_ADMIN_EMAIL: ${DEFAULT_ADMIN_EMAIL:?DEFAULT_ADMIN_EMAIL is required}
-      DEFAULT_ADMIN_PASSWORD: ${DEFAULT_ADMIN_PASSWORD:?DEFAULT_ADMIN_PASSWORD is required}
+      STRIPE_PUBLISHABLE_KEY: ${STRIPE_PUBLISHABLE_KEY:-pk_test_xxx}
+      RESEND_API_KEY: ${RESEND_API_KEY:-re_xxx}
+      UNIVERSITY_FROM_EMAIL: ${UNIVERSITY_FROM_EMAIL:-pagos@universidad.edu}
+      BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET:-replace_with_32_char_secret}
+      BETTER_AUTH_URL: ${BETTER_AUTH_URL:-http://backend:4000}
+      ADMIN_EMAILS: ${ADMIN_EMAILS:-admin@uva.edu}
+      DEFAULT_ADMIN_EMAIL: ${DEFAULT_ADMIN_EMAIL:-admin@uva.edu}
+      DEFAULT_ADMIN_PASSWORD: ${DEFAULT_ADMIN_PASSWORD:-ChangeMe_1234}
       DEFAULT_ADMIN_NAME: ${DEFAULT_ADMIN_NAME:-Administrador}
       GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
       GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-}
@@ -72,7 +72,7 @@ services:
       context: .
       dockerfile: packages/frontend/Dockerfile
       args:
-        VITE_API_URL: ${VITE_API_URL:?VITE_API_URL is required}
+        VITE_API_URL: ${VITE_API_URL:-http://backend:4000}
     container_name: pasarela-frontend
     restart: unless-stopped
     depends_on:
