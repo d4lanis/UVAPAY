@@ -1,9 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
 import type { ReactNode } from "react";
+import { API_URL } from "../api/baseUrl";
 import { authClient } from "./client";
 import { AuthContext, type AuthContextValue, type AuthUser } from "./state";
-
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:4000";
 
 function normalizeError(error: unknown, fallback: string): Error {
   if (error instanceof Error) {

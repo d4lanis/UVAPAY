@@ -52,7 +52,7 @@ export const enabledSocialProviders = Object.keys(getSocialProviders());
 export const auth = betterAuth({
   secret: env.betterAuthSecret,
   baseURL: env.betterAuthUrl,
-  trustedOrigins: [env.frontendUrl],
+  trustedOrigins: env.trustedOrigins,
   database: drizzleAdapter(db, {
     provider: "pg",
     schema: authSchema,

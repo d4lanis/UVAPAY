@@ -6,8 +6,7 @@ import type {
   StudentFormValues,
   StudentState,
 } from "../types/state";
-
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:4000";
+import { API_URL } from "./baseUrl";
 
 const client = axios.create({
   baseURL: API_URL,
