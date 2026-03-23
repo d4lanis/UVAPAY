@@ -1,3 +1,4 @@
+import cors from "cors";
 import express from "express";
 import helmet from "helmet";
 import { toNodeHandler } from "better-auth/node";
@@ -17,6 +18,7 @@ async function bootstrap(): Promise<void> {
   const app = express();
 
   app.use(helmet());
+  app.use(cors({ origin: true, credentials: true }));
 
   app.get("/api/auth/providers", (_req, res) => {
     res.json({ providers: enabledSocialProviders });
