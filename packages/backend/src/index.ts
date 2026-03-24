@@ -2,7 +2,7 @@ import cors from "cors";
 import express from "express";
 import helmet from "helmet";
 import { toNodeHandler } from "better-auth/node";
-import { auth, enabledSocialProviders, seedDefaultAdminUser } from "./auth";
+import { auth, enabledSocialProviders } from "./auth";
 import { pool, runMigrations } from "./config/db";
 import { env } from "./config/env";
 import { requireAdmin, requireAuth } from "./middleware/auth";
@@ -54,8 +54,6 @@ async function bootstrap(): Promise<void> {
   if (env.databaseUrl) {
     await runMigrations();
   }
-
-  await seedDefaultAdminUser();
 
   app.listen(env.port, () => {
     logInfo("Backend started", { port: env.port, env: env.nodeEnv });

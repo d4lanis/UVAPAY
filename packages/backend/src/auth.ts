@@ -69,59 +69,69 @@ export const auth = betterAuth({
   plugins: [bearer(), jwt()],
 });
 
-async function createDefaultAdminUser(): Promise<void> {
+function buildAdminNameFromEmail(email: string): string {
+  const localPart = email.split("@")[0] || "admin";
+  return localPart
+    .split(/[._-]+/)
+    .filter(Boolean)
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(" ");
+}
+
+async function createAdminUser(email: string, password: string): Promise<void> {
   await auth.api.signUpEmail({
     body: {
-      name: env.defaultAdminName,
-      email: env.defaultAdminEmail,
-      password: env.defaultAdminPassword,
+      name: buildAdminNameFromEmail(email),
+      email,
+      password,
     },
   });
 }
 
-async function replaceDefaultAdminUser(): Promise<boolean> {
+async function replaceAdminUser(email: string, password: string): Promise<boolean> {
   const existing = await db
     .select({ id: user.id })
     .from(user)
-    .where(eq(user.email, env.defaultAdminEmail))
+    .where(eq(user.email, email))
     .limit(1);
 
   if (!existing[0]) {
     return false;
   }
 
-  // Remove the existing default admin user so sign-up rehashes the new password.
+  // Remove the existing admin user so sign-up rehashes the new password.
   await db.delete(user).where(eq(user.id, existing[0].id));
-  await createDefaultAdminUser();
+  await createAdminUser(email, password);
   return true;
 }
 
-type SeedDefaultAdminOptions = {
+type SeedAdminUsersOptions = {
   syncPasswordIfExists?: boolean;
 };
 
-export async function seedDefaultAdminUser(options: SeedDefaultAdminOptions = {}): Promise<void> {
+export async function seedAdminUsers(options: SeedAdminUsersOptions = {}): Promise<void> {
   const { syncPasswordIfExists = false } = options;
+  const password = env.adminSeedPassword;
 
-  try {
-    await createDefaultAdminUser();
-    console.info("[auth] default admin user created", { email: env.defaultAdminEmail });
-  } catch (error) {
-    const message = error instanceof Error ? error.message.toLowerCase() : "";
-    if (message.includes("already") || message.includes("exists")) {
+  for (const email of env.adminEmails) {
+    try {
+      await createAdminUser(email, password);
+      console.info("[auth] admin user created", { email });
+      continue;
+    } catch (error) {
+      const message = error instanceof Error ? error.message.toLowerCase() : "";
+      if (!message.includes("already") && !message.includes("exists")) {
+        throw error;
+      }
+
       if (!syncPasswordIfExists) {
-        return;
+        continue;
       }
 
-      const replaced = await replaceDefaultAdminUser();
+      const replaced = await replaceAdminUser(email, password);
       if (replaced) {
-        console.info("[auth] default admin user credentials updated", {
-          email: env.defaultAdminEmail,
-        });
+        console.info("[auth] admin user credentials updated", { email });
       }
-      return;
     }
-
-    throw error;
   }
 }

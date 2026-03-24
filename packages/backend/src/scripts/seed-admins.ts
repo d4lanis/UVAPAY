@@ -1,9 +1,9 @@
-import { seedDefaultAdminUser } from "../auth";
+import { seedAdminUsers } from "../auth";
 import { runMigrations } from "../config/db";
 
 async function main(): Promise<void> {
   await runMigrations();
-  await seedDefaultAdminUser({ syncPasswordIfExists: true });
+  await seedAdminUsers({ syncPasswordIfExists: true });
   console.info("[seed] admin seeding completed");
 }
 
