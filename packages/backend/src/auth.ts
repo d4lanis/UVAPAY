@@ -96,13 +96,23 @@ async function replaceDefaultAdminUser(): Promise<boolean> {
   return true;
 }
 
-export async function seedDefaultAdminUser(): Promise<void> {
+type SeedDefaultAdminOptions = {
+  syncPasswordIfExists?: boolean;
+};
+
+export async function seedDefaultAdminUser(options: SeedDefaultAdminOptions = {}): Promise<void> {
+  const { syncPasswordIfExists = false } = options;
+
   try {
     await createDefaultAdminUser();
     console.info("[auth] default admin user created", { email: env.defaultAdminEmail });
   } catch (error) {
     const message = error instanceof Error ? error.message.toLowerCase() : "";
     if (message.includes("already") || message.includes("exists")) {
+      if (!syncPasswordIfExists) {
+        return;
+      }
+
       const replaced = await replaceDefaultAdminUser();
       if (replaced) {
         console.info("[auth] default admin user credentials updated", {

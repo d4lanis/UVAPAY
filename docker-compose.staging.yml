@@ -30,6 +30,8 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+      admin-seeder:
+        condition: service_completed_successfully
     environment:
       NODE_ENV: production
       PORT: 4000
@@ -64,6 +66,45 @@ services:
       timeout: 10s
       retries: 3
       start_period: 30s
+    networks:
+      - app-network
+
+  admin-seeder:
+    build:
+      context: .
+      dockerfile: packages/backend/Dockerfile
+    container_name: pasarela-admin-seeder
+    restart: "no"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      NODE_ENV: production
+      PORT: 4000
+      FRONTEND_URL: ${FRONTEND_URL:-http://frontend:5173}
+      DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@postgres:5432/${POSTGRES_DB:-pasarela_pago}
+      STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY:-sk_test_xxx}
+      STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET:-}
+      STRIPE_PUBLISHABLE_KEY: ${STRIPE_PUBLISHABLE_KEY:-pk_test_xxx}
+      RESEND_API_KEY: ${RESEND_API_KEY:-re_xxx}
+      UNIVERSITY_FROM_EMAIL: ${UNIVERSITY_FROM_EMAIL:-pagos@universidad.edu}
+      BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET:-replace_with_32_char_secret}
+      BETTER_AUTH_URL: ${BETTER_AUTH_URL:-http://backend:4000}
+      ADMIN_EMAILS: ${ADMIN_EMAILS:-admin@uva.edu}
+      DEFAULT_ADMIN_EMAIL: ${DEFAULT_ADMIN_EMAIL:-admin@uva.edu}
+      DEFAULT_ADMIN_PASSWORD: ${DEFAULT_ADMIN_PASSWORD:-ChangeMe_1234}
+      DEFAULT_ADMIN_NAME: ${DEFAULT_ADMIN_NAME:-Administrador}
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-}
+      GITHUB_CLIENT_ID: ${GITHUB_CLIENT_ID:-}
+      GITHUB_CLIENT_SECRET: ${GITHUB_CLIENT_SECRET:-}
+      MICROSOFT_CLIENT_ID: ${MICROSOFT_CLIENT_ID:-}
+      MICROSOFT_CLIENT_SECRET: ${MICROSOFT_CLIENT_SECRET:-}
+      FACEBOOK_CLIENT_ID: ${FACEBOOK_CLIENT_ID:-}
+      FACEBOOK_CLIENT_SECRET: ${FACEBOOK_CLIENT_SECRET:-}
+      APPLE_CLIENT_ID: ${APPLE_CLIENT_ID:-}
+      APPLE_CLIENT_SECRET: ${APPLE_CLIENT_SECRET:-}
+    command: ["node", "dist/scripts/seed-admins.js"]
     networks:
       - app-network
 
