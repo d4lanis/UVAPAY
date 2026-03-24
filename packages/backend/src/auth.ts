@@ -2,9 +2,10 @@ import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { bearer } from "better-auth/plugins/bearer";
 import { jwt } from "better-auth/plugins/jwt";
+import { eq } from "drizzle-orm";
 import { env } from "./config/env";
 import { db } from "./config/drizzle";
-import { authSchema } from "./config/schema";
+import { authSchema, user } from "./config/schema";
 
 function getSocialProviders() {
   const providers: Record<string, { clientId: string; clientSecret: string }> = {};
@@ -68,19 +69,46 @@ export const auth = betterAuth({
   plugins: [bearer(), jwt()],
 });
 
+async function createDefaultAdminUser(): Promise<void> {
+  await auth.api.signUpEmail({
+    body: {
+      name: env.defaultAdminName,
+      email: env.defaultAdminEmail,
+      password: env.defaultAdminPassword,
+    },
+  });
+}
+
+async function replaceDefaultAdminUser(): Promise<boolean> {
+  const existing = await db
+    .select({ id: user.id })
+    .from(user)
+    .where(eq(user.email, env.defaultAdminEmail))
+    .limit(1);
+
+  if (!existing[0]) {
+    return false;
+  }
+
+  // Remove the existing default admin user so sign-up rehashes the new password.
+  await db.delete(user).where(eq(user.id, existing[0].id));
+  await createDefaultAdminUser();
+  return true;
+}
+
 export async function seedDefaultAdminUser(): Promise<void> {
   try {
-    await auth.api.signUpEmail({
-      body: {
-        name: env.defaultAdminName,
-        email: env.defaultAdminEmail,
-        password: env.defaultAdminPassword,
-      },
-    });
+    await createDefaultAdminUser();
     console.info("[auth] default admin user created", { email: env.defaultAdminEmail });
   } catch (error) {
     const message = error instanceof Error ? error.message.toLowerCase() : "";
     if (message.includes("already") || message.includes("exists")) {
+      const replaced = await replaceDefaultAdminUser();
+      if (replaced) {
+        console.info("[auth] default admin user credentials updated", {
+          email: env.defaultAdminEmail,
+        });
+      }
       return;
     }
 
