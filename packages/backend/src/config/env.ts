@@ -54,11 +54,11 @@ export const env = {
   facebookClientSecret: process.env.FACEBOOK_CLIENT_SECRET || "",
   appleClientId: process.env.APPLE_CLIENT_ID || "",
   appleClientSecret: process.env.APPLE_CLIENT_SECRET || "",
-  adminEmails: (process.env.ADMIN_EMAILS || "admin@uva.edu,daniel.alanis.hdz@gmail.com")
+  adminEmails: (process.env.ADMIN_EMAILS || "admin@uva.edu,daniel.alanis.hdz@gmail.com,gisellponce85@gmail.com")
     .split(",")
     .map((email) => email.trim().toLowerCase())
     .filter(Boolean),
-  defaultAdminEmail: process.env.DEFAULT_ADMIN_EMAIL || "daniel.alanis.hdz@gmail.com",
-  defaultAdminPassword: process.env.DEFAULT_ADMIN_PASSWORD || "Barrera1998.",
+  defaultAdminEmail: process.env.DEFAULT_ADMIN_EMAIL || "gisellponce85@gmail.com",
+  defaultAdminPassword: process.env.DEFAULT_ADMIN_PASSWORD || "password123.",
   defaultAdminName: process.env.DEFAULT_ADMIN_NAME || "Daniel Alanis",
 };
