@@ -2,10 +2,9 @@ import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { bearer } from "better-auth/plugins/bearer";
 import { jwt } from "better-auth/plugins/jwt";
-import { eq } from "drizzle-orm";
 import { env } from "./config/env";
 import { db } from "./config/drizzle";
-import { authSchema, user } from "./config/schema";
+import { authSchema } from "./config/schema";
 
 function getSocialProviders() {
   const providers: Record<string, { clientId: string; clientSecret: string }> = {};
@@ -69,69 +68,51 @@ export const auth = betterAuth({
   plugins: [bearer(), jwt()],
 });
 
-function buildAdminNameFromEmail(email: string): string {
-  const localPart = email.split("@")[0] || "admin";
-  return localPart
-    .split(/[._-]+/)
-    .filter(Boolean)
-    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
-    .join(" ");
-}
+/**
+ * Seed de usuarios inicial
+ * 
+ * USUARIOS CREADOS:
+ * 1. Admin: admin@uvapay.com / password123$ (rol: admin)
+ * 2. Estudiante: estudiante@uvapay.com / password123$ (rol: user/estudiante)
+ * 
+ * Estos usuarios son recreados si no existen. Si ya existen, se omiten.
+ */
+const SEED_USERS = [
+  {
+    email: "admin@uvapay.com",
+    password: "password123$",
+    name: "Administrador",
+    role: "admin" as const,
+  },
+  {
+    email: "estudiante@uvapay.com",
+    password: "password123$",
+    name: "Estudiante Demo",
+    role: "user" as const,
+  },
+] as const;
 
-async function createAdminUser(email: string, password: string): Promise<void> {
+async function createUser(email: string, password: string, name: string): Promise<void> {
   await auth.api.signUpEmail({
     body: {
-      name: buildAdminNameFromEmail(email),
+      name,
       email,
       password,
     },
   });
 }
 
-async function replaceAdminUser(email: string, password: string): Promise<boolean> {
-  const existing = await db
-    .select({ id: user.id })
-    .from(user)
-    .where(eq(user.email, email))
-    .limit(1);
-
-  if (!existing[0]) {
-    return false;
-  }
-
-  // Remove the existing admin user so sign-up rehashes the new password.
-  await db.delete(user).where(eq(user.id, existing[0].id));
-  await createAdminUser(email, password);
-  return true;
-}
-
-type SeedAdminUsersOptions = {
-  syncPasswordIfExists?: boolean;
-};
-
-export async function seedAdminUsers(options: SeedAdminUsersOptions = {}): Promise<void> {
-  const { syncPasswordIfExists = false } = options;
-  const password = env.adminSeedPassword;
-
-  for (const email of env.adminEmails) {
+export async function seedUsers(): Promise<void> {
+  for (const seedUser of SEED_USERS) {
     try {
-      await createAdminUser(email, password);
-      console.info("[auth] admin user created", { email });
-      continue;
+      await createUser(seedUser.email, seedUser.password, seedUser.name);
+      console.info("[seed] usuario creado", { email: seedUser.email, role: seedUser.role });
     } catch (error) {
       const message = error instanceof Error ? error.message.toLowerCase() : "";
       if (!message.includes("already") && !message.includes("exists")) {
         throw error;
       }
-
-      if (!syncPasswordIfExists) {
-        continue;
-      }
-
-      const replaced = await replaceAdminUser(email, password);
-      if (replaced) {
-        console.info("[auth] admin user credentials updated", { email });
-      }
+      console.info("[seed] usuario ya existe, omitiendo", { email: seedUser.email });
     }
   }
 }

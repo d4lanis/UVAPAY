@@ -54,9 +54,4 @@ export const env = {
   facebookClientSecret: process.env.FACEBOOK_CLIENT_SECRET || "",
   appleClientId: process.env.APPLE_CLIENT_ID || "",
   appleClientSecret: process.env.APPLE_CLIENT_SECRET || "",
-  adminEmails: (process.env.ADMIN_EMAILS || "daniel.alanis.hdz@gmail.com,gisellponce85@gmail.com")
-    .split(",")
-    .map((email) => email.trim().toLowerCase())
-    .filter(Boolean),
-  adminSeedPassword: process.env.ADMIN_SEED_PASSWORD || "password123.",
 };

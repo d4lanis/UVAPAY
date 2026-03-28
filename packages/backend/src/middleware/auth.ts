@@ -1,7 +1,8 @@
 import type { NextFunction, Request, Response } from "express";
 import { fromNodeHeaders } from "better-auth/node";
 import { auth } from "../auth";
-import { env } from "../config/env";
+
+const ADMIN_EMAILS = ["admin@uvapay.com"];
 
 export interface AuthenticatedUser {
   id: string;
@@ -17,7 +18,7 @@ declare module "express-serve-static-core" {
 }
 
 function isAdminEmail(email: string): boolean {
-  return env.adminEmails.includes(email.toLowerCase());
+  return ADMIN_EMAILS.includes(email.toLowerCase());
 }
 
 export async function requireAuth(req: Request, res: Response, next: NextFunction): Promise<void> {
