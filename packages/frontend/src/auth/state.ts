@@ -20,7 +20,7 @@ export interface AuthContextValue {
 }
 
 // Fallback local (el backend es la fuente de verdad para el rol de admin)
-export const ADMIN_EMAILS = (import.meta.env.VITE_ADMIN_EMAILS || "admin@uva.edu,daniel.alanis.hdz@gmail.com")
+export const ADMIN_EMAILS = (import.meta.env.VITE_ADMIN_EMAILS || "admin@uvapay.com")
   .split(",")
   .map((email: string) => email.trim().toLowerCase())
   .filter(Boolean);

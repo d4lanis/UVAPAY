@@ -45,13 +45,7 @@ export default function LoginPage() {
     setError(null);
     try {
       await loginWithEmail(values.email, values.password);
-
-      // Verificar si el email es de admin
-      const adminEmails = (import.meta.env.VITE_ADMIN_EMAILS || "admin@uva.edu,daniel.alanis.hdz@gmail.com")
-        .split(",")
-        .map((e: string) => e.trim().toLowerCase());
-
-      const destination = adminEmails.includes(values.email.toLowerCase()) ? "/admin" : "/estudiante/pagos";
+      const destination = isAdmin ? "/admin" : "/estudiante/pagos";
       navigate(destination, { replace: true });
     } catch (err) {
       setError(err instanceof Error ? err.message : "No fue posible iniciar sesion");
