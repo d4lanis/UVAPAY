@@ -23,71 +23,61 @@ interface AuthMeResponse {
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null);
-  const [isAdmin, setIsAdmin] = useState(false);
+  const [role, setRole] = useState<"admin" | "user">("user");
   const [loading, setLoading] = useState(true);
 
-  const refreshSession = async () => {
+  const refreshSession = async (): Promise<"admin" | "user"> => {
+    let currentRole: "admin" | "user" = "user";
     try {
       const session = await authClient.getSession();
       const sessionUser = session.data?.user;
       if (!sessionUser) {
         setUser(null);
-        setIsAdmin(false);
-        return;
+        setRole("user");
+        return "user";
       }
 
-      // Obtener el rol del usuario desde el backend
-      try {
-        const response = await fetch(`${API_URL}/api/auth/me`, {
-          credentials: "include",
+      const response = await fetch(`${API_URL}/api/auth/me`, {
+        credentials: "include",
+      });
+      if (response.ok) {
+        const data: AuthMeResponse = await response.json();
+        setUser({
+          id: sessionUser.id,
+          email: sessionUser.email,
+          name: sessionUser.name,
+          isAdmin: data.isAdmin,
         });
-        if (response.ok) {
-          const data: AuthMeResponse = await response.json();
-          setUser({
-            id: sessionUser.id,
-            email: sessionUser.email,
-            name: sessionUser.name,
-            isAdmin: data.isAdmin,
-          });
-          setIsAdmin(data.isAdmin);
-        } else {
-          // Fallback: usar la sesión sin información de admin
-          setUser({
-            id: sessionUser.id,
-            email: sessionUser.email,
-            name: sessionUser.name,
-          });
-          setIsAdmin(false);
-        }
-      } catch {
-        // Si falla la llamada al endpoint, usar sesión básica
+        currentRole = data.user.role;
+        setRole(data.user.role);
+      } else {
         setUser({
           id: sessionUser.id,
           email: sessionUser.email,
           name: sessionUser.name,
         });
-        setIsAdmin(false);
+        setRole("user");
       }
     } catch {
       setUser(null);
-      setIsAdmin(false);
+      setRole("user");
     }
+    return currentRole;
   };
 
   useEffect(() => {
     refreshSession()
       .catch(() => {
         setUser(null);
-        setIsAdmin(false);
+        setRole("user");
       })
       .finally(() => setLoading(false));
   }, []);
 
-  // Escuchar evento de sesión expirada (solo limpia estado, la navegación se maneja en los componentes)
   useEffect(() => {
     const handleSessionExpired = () => {
       setUser(null);
-      setIsAdmin(false);
+      setRole("user");
     };
 
     window.addEventListener("session:expired", handleSessionExpired);
@@ -98,14 +88,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return {
       user,
       loading,
-      isAdmin,
+      isAdmin: role === "admin",
+      role,
       loginWithEmail: async (email, password) => {
         const result = await authClient.signIn.email({ email, password, rememberMe: true });
         if (result.error) {
           throw new Error(result.error.message || "No fue posible iniciar sesion");
         }
 
-        await refreshSession();
+        return refreshSession();
       },
       registerWithEmail: async (name, email, password) => {
         const result = await authClient.signUp.email({ name, email, password });
@@ -139,11 +130,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       logout: async () => {
         await authClient.signOut();
         setUser(null);
-        setIsAdmin(false);
+        setRole("user");
       },
       refreshSession,
     };
-  }, [loading, user, isAdmin]);
+  }, [loading, user, role]);
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }

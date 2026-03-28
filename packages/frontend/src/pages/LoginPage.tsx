@@ -2,7 +2,7 @@ import { Alert, Box, Button, Card, CardContent, Checkbox, Divider, FormControlLa
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
-import { Link, useLocation, useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { z } from "zod";
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import VisibilityOffIcon from "@mui/icons-material/VisibilityOff";
@@ -19,21 +19,14 @@ const schema = z.object({
 type FormValues = z.infer<typeof schema>;
 
 export default function LoginPage() {
-  const { loginWithEmail, signInWithProvider, isAdmin } = useAuth();
+  const { loginWithEmail, signInWithProvider } = useAuth();
   const navigate = useNavigate();
-  const location = useLocation();
   const [error, setError] = useState<string | null>(null);
   const [socialLoading, setSocialLoading] = useState<string | null>(null);
   const [providers, setProviders] = useState<string[]>([]);
   const [showPassword, setShowPassword] = useState(false);
 
-  const targetPath = (location.state as { from?: string } | undefined)?.from || (isAdmin ? "/admin" : "/estudiante/pagos");
-
-  const {
-    register,
-    handleSubmit,
-    formState: { errors, isSubmitting },
-  } = useForm<FormValues>({ resolver: zodResolver(schema), mode: "onBlur" });
+  const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<FormValues>({ resolver: zodResolver(schema), mode: "onBlur" });
 
   useEffect(() => {
     getAuthProviders()
@@ -44,8 +37,8 @@ export default function LoginPage() {
   const onSubmit = async (values: FormValues) => {
     setError(null);
     try {
-      await loginWithEmail(values.email, values.password);
-      const destination = isAdmin ? "/admin" : "/estudiante/pagos";
+      const userRole = await loginWithEmail(values.email, values.password);
+      const destination = userRole === "admin" ? "/admin" : "/estudiante/pagos";
       navigate(destination, { replace: true });
     } catch (err) {
       setError(err instanceof Error ? err.message : "No fue posible iniciar sesion");
@@ -56,7 +49,7 @@ export default function LoginPage() {
     setError(null);
     setSocialLoading(provider);
     try {
-      await signInWithProvider(provider, `${window.location.origin}${targetPath}`);
+      await signInWithProvider(provider, `${window.location.origin}/estudiante/pagos`);
     } catch (err) {
       setError(err instanceof Error ? err.message : "No fue posible iniciar sesion social");
       setSocialLoading(null);

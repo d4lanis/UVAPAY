@@ -11,18 +11,13 @@ export interface AuthContextValue {
   user: AuthUser | null;
   loading: boolean;
   isAdmin: boolean;
-  loginWithEmail: (email: string, password: string) => Promise<void>;
+  role: "admin" | "user";
+  loginWithEmail: (email: string, password: string) => Promise<"admin" | "user">;
   registerWithEmail: (name: string, email: string, password: string) => Promise<void>;
   requestPasswordReset: (email: string) => Promise<void>;
   signInWithProvider: (provider: string, callbackURL?: string) => Promise<void>;
   logout: () => Promise<void>;
-  refreshSession: () => Promise<void>;
+  refreshSession: () => Promise<"admin" | "user">;
 }
-
-// Fallback local (el backend es la fuente de verdad para el rol de admin)
-export const ADMIN_EMAILS = (import.meta.env.VITE_ADMIN_EMAILS || "admin@uvapay.com")
-  .split(",")
-  .map((email: string) => email.trim().toLowerCase())
-  .filter(Boolean);
 
 export const AuthContext = createContext<AuthContextValue | undefined>(undefined);
